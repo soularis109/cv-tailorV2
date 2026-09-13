@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: tailorcv_mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_DATABASE: tailorcv
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-express:
+    image: mongo-express:1
+    container_name: tailorcv_mongo_ui
+    restart: unless-stopped
+    ports:
+      - '8081:8081'
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: secret
+      ME_CONFIG_MONGODB_URL: mongodb://admin:secret@mongo:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: secret
+    depends_on:
+      - mongo
+
+  redis:
+    image: redis:7-alpine
+    container_name: tailorcv_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --requirepass redissecret --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: tailorcv_redis_ui
+    restart: unless-stopped
+    ports:
+      - '8082:8081'
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:redissecret
+    depends_on:
+      - redis
+
+volumes:
+  mongo_data:
+  redis_data:
